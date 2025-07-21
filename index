@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cờ Caro 9x9 - Có Thời Gian</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f3f3;
+      text-align: center;
+      padding-top: 30px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(9, 40px);
+      grid-template-rows: repeat(9, 40px);
+      gap: 2px;
+      margin: 20px auto;
+      width: max-content;
+    }
+
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: #fff;
+      border: 1px solid #999;
+      font-size: 24px;
+      line-height: 40px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cell:hover {
+      background-color: #eef;
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #444;
+    }
+
+    #timer {
+      margin-top: 10px;
+      font-size: 20px;
+      color: #d00;
+    }
+
+    #reset-btn {
+      margin-top: 15px;
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cờ Caro 9x9 - Có Đồng Hồ</h1>
+  <div id="game-board"></div>
+  <div id="status">Lượt của người chơi: X</div>
+  <div id="timer">Thời gian còn lại: 60s</div>
+  <button id="reset-btn">Chơi lại</button>
+
+  <script>
+    const boardSize = 9;
+    const winCondition = 5;
+    const board = [];
+    let currentPlayer = "X";
+    let gameOver = false;
+    let timer = 60;
+    let timerInterval;
+
+    const gameBoardEl = document.getElementById("game-board");
+    const statusEl = document.getElementById("status");
+    const timerEl = document.getElementById("timer");
+    const resetBtn = document.getElementById("reset-btn");
+
+    function createBoard() {
+      gameBoardEl.innerHTML = "";
+      board.length = 0;
+      gameOver = false;
+      currentPlayer = "X";
+      timer = 60;
+      clearInterval(timerInterval);
+      statusEl.textContent = "Lượt của người chơi: X";
+      timerEl.textContent = "Thời gian còn lại: 60s";
+
+      for (let i = 0; i < boardSize; i++) {
+        board[i] = [];
+        for (let j = 0; j < boardSize; j++) {
+          const cell = document.createElement("div");
+          cell.classList.add("cell");
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          cell.addEventListener("click", handleCellClick);
+          board[i][j] = "";
+          gameBoardEl.appendChild(cell);
+        }
+      }
+
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timer = 60;
+      timerEl.textContent = `Thời gian còn lại: ${timer}s`;
+
+      timerInterval = setInterval(() => {
+        if (gameOver) {
+          clearInterval(timerInterval);
+          return;
+        }
+
+        timer--;
+        timerEl.textContent = `Thời gian còn lại: ${timer}s`;
+
+        if (timer <= 0) {
+          clearInterval(timerInterval);
+          gameOver = true;
+          statusEl.textContent = `Người chơi ${currentPlayer} hết thời gian! Người chơi ${currentPlayer === "X" ? "O" : "X"} thắng!`;
+        }
+      }, 1000);
+    }
+
+    function handleCellClick(e) {
+      if (gameOver) return;
+
+      const row = +e.target.dataset.row;
+      const col = +e.target.dataset.col;
+
+      if (board[row][col] !== "") return;
+
+      board[row][col] = currentPlayer;
+      e.target.textContent = currentPlayer;
+
+      if (checkWin(row, col)) {
+        statusEl.textContent = `Người chơi ${currentPlayer} thắng!`;
+        gameOver = true;
+        clearInterval(timerInterval);
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      statusEl.textContent = `Lượt của người chơi: ${currentPlayer}`;
+      startTimer(); // reset thời gian cho người mới
+    }
+
+    function checkWin(row, col) {
+      const directions = [
+        [0, 1],  // ngang
+        [1, 0],  // dọc
+        [1, 1],  // chéo chính
+        [1, -1], // chéo phụ
+      ];
+
+      for (const [dx, dy] of directions) {
+        let count = 1;
+
+        for (let i = 1; i < winCondition; i++) {
+          const r = row + dx * i;
+          const c = col + dy * i;
+          if (board[r] && board[r][c] === currentPlayer) count++;
+          else break;
+        }
+
+        for (let i = 1; i < winCondition; i++) {
+          const r = row - dx * i;
+          const c = col - dy * i;
+          if (board[r] && board[r][c] === currentPlayer) count++;
+          else break;
+        }
+
+        if (count >= winCondition) return true;
+      }
+
+      return false;
+    }
+
+    resetBtn.addEventListener("click", createBoard);
+
+    createBoard();
+  </script>
+</body>
+</html>
